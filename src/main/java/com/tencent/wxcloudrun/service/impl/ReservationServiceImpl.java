@@ -25,7 +25,9 @@ public class ReservationServiceImpl implements ReservationService {
         if (cell == null) return null;
         switch (cell.getCellType()) {
             case STRING:
-                return cell.getStringCellValue().trim();
+                String str = cell.getStringCellValue().trim();
+                if ("/".equals(str) || str.isEmpty()) return null;
+                return str;
             case NUMERIC:
                 double val = cell.getNumericCellValue();
                 if (val == Math.floor(val) && !Double.isInfinite(val)) {
@@ -87,6 +89,11 @@ public class ReservationServiceImpl implements ReservationService {
         return null;
     }
 
+    private boolean parseBoolean(Cell cell) {
+        String str = getCellStringValue(cell);
+        return "1".equals(str) || "是".equals(str) || "true".equalsIgnoreCase(str);
+    }
+
     @Override
     public int importExcel(MultipartFile file) {
         List<Reservation> reservations = new ArrayList<>();
@@ -98,44 +105,45 @@ public class ReservationServiceImpl implements ReservationService {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
 
+                String name = getCellStringValue(row.getCell(1));
+                String phone = getCellStringValue(row.getCell(2));
+                if (name == null && phone == null) continue;
+
                 Reservation reservation = new Reservation();
 
-                reservation.setName(getCellStringValue(row.getCell(1)));
+                reservation.setName(name);
 
-                reservation.setPhone(getCellStringValue(row.getCell(2)));
+                reservation.setPhone(phone);
 
                 String guestCountStr = getCellStringValue(row.getCell(3));
-                if (guestCountStr != null && !guestCountStr.isEmpty()) {
+                if (guestCountStr != null) {
                     reservation.setGuestCount(Integer.parseInt(guestCountStr));
                 }
 
                 String roomCountStr = getCellStringValue(row.getCell(4));
-                if (roomCountStr != null && !roomCountStr.isEmpty()) {
+                if (roomCountStr != null) {
                     reservation.setRoomCount(Integer.parseInt(roomCountStr));
                 }
 
-                String singleStr = getCellStringValue(row.getCell(5));
-                reservation.setRoomTypeSingle("是".equals(singleStr) || "1".equals(singleStr) || "true".equalsIgnoreCase(singleStr));
+                // 列5: 房间类型（可多选）- 描述性文字，跳过
+                // 列6: 大床房, 列7: 标准间, 列8: 套房
+                reservation.setRoomTypeSingle(parseBoolean(row.getCell(6)));
+                reservation.setRoomTypeStandard(parseBoolean(row.getCell(7)));
+                reservation.setRoomTypeSuite(parseBoolean(row.getCell(8)));
 
-                String standardStr = getCellStringValue(row.getCell(6));
-                reservation.setRoomTypeStandard("是".equals(standardStr) || "1".equals(standardStr) || "true".equalsIgnoreCase(standardStr));
+                reservation.setPickupLocation(getCellStringValue(row.getCell(9)));
 
-                String suiteStr = getCellStringValue(row.getCell(7));
-                reservation.setRoomTypeSuite("是".equals(suiteStr) || "1".equals(suiteStr) || "true".equalsIgnoreCase(suiteStr));
+                reservation.setArrivalDate(parseDate(row.getCell(10)));
 
-                reservation.setPickupLocation(getCellStringValue(row.getCell(8)));
+                reservation.setArrivalTime(parseTime(row.getCell(11)));
 
-                reservation.setArrivalDate(parseDate(row.getCell(9)));
+                reservation.setHotel(getCellStringValue(row.getCell(12)));
 
-                reservation.setArrivalTime(parseTime(row.getCell(10)));
+                reservation.setRoomNumber(getCellStringValue(row.getCell(13)));
 
-                reservation.setHotel(getCellStringValue(row.getCell(11)));
+                reservation.setTableNumber(getCellStringValue(row.getCell(14)));
 
-                reservation.setRoomNumber(getCellStringValue(row.getCell(12)));
-
-                reservation.setTableNumber(getCellStringValue(row.getCell(13)));
-
-                reservation.setRemark(getCellStringValue(row.getCell(14)));
+                reservation.setRemark(getCellStringValue(row.getCell(15)));
 
                 reservations.add(reservation);
             }
