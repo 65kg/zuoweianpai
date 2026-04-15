@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tencent.wxcloudrun.dao.ReservationMapper">
+    
+    <insert id="insert" parameterType="com.tencent.wxcloudrun.model.Reservation">
+        INSERT INTO reservation (
+            name, phone, guest_count, room_count, 
+            room_type_single, room_type_standard, room_type_suite, 
+            pickup_location, arrival_date, arrival_time, 
+            hotel, room_number, table_number, remark
+        ) VALUES (
+            #{name}, #{phone}, #{guestCount}, #{roomCount}, 
+            #{roomTypeSingle}, #{roomTypeStandard}, #{roomTypeSuite}, 
+            #{pickupLocation}, #{arrivalDate}, #{arrivalTime}, 
+            #{hotel}, #{roomNumber}, #{tableNumber}, #{remark}
+        )
+    </insert>
+    
+    <select id="findByPhoneOrName" resultType="com.tencent.wxcloudrun.model.Reservation">
+        SELECT * FROM reservation
+        WHERE 1=1
+        <if test="phone != null and phone != ''">
+            AND phone LIKE CONCAT('%', #{phone}, '%')
+        </if>
+        <if test="name != null and name != ''">
+            AND name LIKE CONCAT('%', #{name}, '%')
+        </if>
+        ORDER BY created_at DESC
+    </select>
+    
+    <update id="updateById" parameterType="com.tencent.wxcloudrun.model.Reservation">
+        UPDATE reservation SET
+            name = #{name},
+            phone = #{phone},
+            guest_count = #{guestCount},
+            room_count = #{roomCount},
+            room_type_single = #{roomTypeSingle},
+            room_type_standard = #{roomTypeStandard},
+            room_type_suite = #{roomTypeSuite},
+            pickup_location = #{pickupLocation},
+            arrival_date = #{arrivalDate},
+            arrival_time = #{arrivalTime},
+            hotel = #{hotel},
+            room_number = #{roomNumber},
+            table_number = #{tableNumber},
+            remark = #{remark}
+        WHERE id = #{id}
+    </update>
+    
+    <insert id="batchInsert">
+        INSERT INTO reservation (
+            name, phone, guest_count, room_count, 
+            room_type_single, room_type_standard, room_type_suite, 
+            pickup_location, arrival_date, arrival_time, 
+            hotel, room_number, table_number, remark
+        ) VALUES
+        <foreach collection="reservations" item="reservation" separator=",">
+            (
+                #{reservation.name}, #{reservation.phone}, #{reservation.guestCount}, #{reservation.roomCount}, 
+                #{reservation.roomTypeSingle}, #{reservation.roomTypeStandard}, #{reservation.roomTypeSuite}, 
+                #{reservation.pickupLocation}, #{reservation.arrivalDate}, #{reservation.arrivalTime}, 
+                #{reservation.hotel}, #{reservation.roomNumber}, #{reservation.tableNumber}, #{reservation.remark}
+            )
+        </foreach>
+    </insert>
+</mapper>
