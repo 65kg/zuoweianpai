@@ -12,20 +12,19 @@
 
     body {
       font-family: 'Noto Serif SC', 'PingFang SC', 'Microsoft YaHei', serif;
-      background: linear-gradient(180deg, #8B0000 0%, #A01010 30%, #B22222 60%, #C0392B 100%);
+      background: url('bg.png') no-repeat center center fixed;
+      background-size: cover;
       min-height: 100vh;
       color: #3D1C00;
       position: relative;
       overflow-x: hidden;
     }
 
-    body::before {
+    body::after {
       content: '';
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
-      background:
-        radial-gradient(ellipse at 20% 20%, rgba(255,215,0,0.08) 0%, transparent 50%),
-        radial-gradient(ellipse at 80% 80%, rgba(255,215,0,0.06) 0%, transparent 50%);
+      background: rgba(0,0,0,0.2);
       pointer-events: none;
       z-index: 0;
     }
