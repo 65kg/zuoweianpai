@@ -19,4 +19,7 @@ public interface ReservationMapper {
     
     // 批量插入预订信息
     int batchInsert(@Param("reservations") List<Reservation> reservations);
+
+    // 根据姓名和手机号查询是否存在
+    int countByNameAndPhone(@Param("name") String name, @Param("phone") String phone);
 }

@@ -109,6 +109,8 @@ public class ReservationServiceImpl implements ReservationService {
                 String phone = getCellStringValue(row.getCell(2));
                 if (name == null && phone == null) continue;
 
+                if (name != null && phone != null && reservationMapper.countByNameAndPhone(name, phone) > 0) continue;
+
                 Reservation reservation = new Reservation();
 
                 reservation.setName(name);

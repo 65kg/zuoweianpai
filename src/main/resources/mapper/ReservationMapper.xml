@@ -63,4 +63,8 @@
             )
         </foreach>
     </insert>
+
+    <select id="countByNameAndPhone" resultType="int">
+        SELECT COUNT(*) FROM reservation WHERE name = #{name} AND phone = #{phone}
+    </select>
 </mapper>
