@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous" />
-  <title>手机号输入</title>
+  <title>预订信息查询</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Droid Sans", "Helvetica Neue", "PingFang SC", "Hiragino Sans GB", "Droid Sans Fallback", "Microsoft YaHei", sans-serif;
@@ -16,34 +16,34 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
       padding: 20px;
+      min-height: 100vh;
     }
 
-    .card {
+    .search-card {
       width: 100%;
-      max-width: 400px;
+      max-width: 500px;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
       overflow: hidden;
+      margin-bottom: 20px;
     }
 
-    .card-header {
+    .search-card .card-header {
       background-color: #07c160;
       color: white;
       text-align: center;
-      padding: 24px;
+      padding: 20px;
       font-size: 18px;
       font-weight: 600;
     }
 
-    .card-body {
-      padding: 32px 24px;
+    .search-card .card-body {
+      padding: 24px;
     }
 
     .form-group {
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
 
     .form-label {
@@ -96,86 +96,201 @@
       display: none;
     }
 
-    .success-message {
-      color: #52c41a;
+    .result-area {
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .result-card {
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .result-card .card-header {
+      background-color: #fff;
+      border-bottom: 1px solid #f0f0f0;
+      padding: 14px 20px;
+      font-weight: 600;
+      font-size: 16px;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .result-card .card-body {
+      padding: 16px 20px;
+    }
+
+    .info-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
       font-size: 14px;
-      margin-top: 16px;
+    }
+
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    .info-label {
+      color: #999;
+      width: 90px;
+      flex-shrink: 0;
+    }
+
+    .info-value {
+      color: #333;
+      flex: 1;
+      word-break: break-all;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      margin-right: 4px;
+    }
+
+    .tag-yes {
+      background-color: #e6f7e6;
+      color: #52c41a;
+    }
+
+    .tag-no {
+      background-color: #f5f5f5;
+      color: #999;
+    }
+
+    .no-result {
       text-align: center;
-      display: none;
+      color: #999;
+      padding: 40px 0;
+      font-size: 16px;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px 0;
+      color: #07c160;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <div class="card">
+    <div class="search-card card">
       <div class="card-header">
-        请输入手机号
+        预订信息查询
       </div>
       <div class="card-body">
-        <form id="phoneForm">
+        <form id="searchForm">
           <div class="form-group">
-            <label for="phone" class="form-label">手机号</label>
-            <input type="tel" id="phone" class="form-control" placeholder="请输入11位手机号码" maxlength="11">
-            <div class="error-message" id="phoneError">请输入正确的手机号码</div>
+            <label for="phone" class="form-label">手机号码</label>
+            <input type="tel" id="phone" class="form-control" placeholder="请输入手机号码" maxlength="11">
           </div>
-          <button type="submit" class="btn-submit">提交</button>
-          <div class="success-message" id="successMessage">手机号提交成功！</div>
+          <button type="submit" class="btn-submit">查询</button>
+          <div class="error-message" id="errorMessage"></div>
         </form>
       </div>
     </div>
+
+    <div class="result-area" id="resultArea"></div>
   </div>
 
   <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
   <script>
     $(document).ready(function() {
-      $('#phoneForm').submit(function(e) {
+      $('#searchForm').submit(function(e) {
         e.preventDefault();
-        
+
         const phone = $('#phone').val().trim();
-        const phoneRegex = /^1[3-9]\d{9}$/;
-        
-        if (!phoneRegex.test(phone)) {
-          $('#phoneError').show();
-          $('#successMessage').hide();
+        if (!phone) {
+          showError('请输入手机号码');
           return;
         }
-        
-        $('#phoneError').hide();
-        
-        // 发送AJAX请求，将手机号发送到后端
-        $.ajax("/api/phone", {
-          method: "POST",
-          contentType: "application/json; charset=utf-8",
+
+        $('#errorMessage').hide();
+        $('#resultArea').html('<div class="loading">查询中...</div>');
+
+        $.ajax({
+          url: "/api/reservation/search",
+          method: "GET",
           dataType: "json",
-          data: JSON.stringify({
-            phone: phone
-          }),
+          data: { phone: phone },
           success: function(res) {
             if (res && res.code === 0) {
-              $('#successMessage').show();
-              // 3秒后隐藏成功提示
-              setTimeout(function() {
-                $('#successMessage').hide();
-              }, 3000);
+              renderResults(res.data);
             } else {
-              $('#phoneError').text('提交失败，请重试');
-              $('#phoneError').show();
+              showError('查询失败：' + (res.errorMsg || '未知错误'));
+              $('#resultArea').html('');
             }
           },
           error: function() {
-            $('#phoneError').text('网络错误，请重试');
-            $('#phoneError').show();
+            showError('网络错误，请重试');
+            $('#resultArea').html('');
           }
         });
       });
-      
-      // 输入时隐藏错误提示
+
       $('#phone').on('input', function() {
-        $('#phoneError').hide();
-        $('#successMessage').hide();
+        $('#errorMessage').hide();
       });
+
+      function showError(msg) {
+        $('#errorMessage').text(msg).show();
+      }
+
+      function renderResults(list) {
+        if (!list || list.length === 0) {
+          $('#resultArea').html('<div class="no-result">未查询到相关预订信息</div>');
+          return;
+        }
+
+        let html = '';
+        list.forEach(function(item) {
+          const roomTypes = [];
+          if (item.roomTypeSingle) roomTypes.push('<span class="tag tag-yes">大床房</span>');
+          if (item.roomTypeStandard) roomTypes.push('<span class="tag tag-yes">标准间</span>');
+          if (item.roomTypeSuite) roomTypes.push('<span class="tag tag-yes">套房</span>');
+          const roomTypeHtml = roomTypes.length > 0 ? roomTypes.join('') : '<span class="tag tag-no">无</span>';
+
+          html += '<div class="result-card card">';
+          html += '<div class="card-header">' + (item.name || '') + ' <span style="color:#999;font-weight:400;font-size:14px;">' + (item.phone || '') + '</span></div>';
+          html += '<div class="card-body">';
+          html += infoRow('来宾人数', item.guestCount);
+          html += infoRow('房间需求数', item.roomCount);
+          html += infoRow('房间类型', roomTypeHtml);
+          html += infoRow('接站地', item.pickupLocation);
+          html += infoRow('到达日期', formatDate(item.arrivalDate));
+          html += infoRow('到达时间', formatTime(item.arrivalTime));
+          html += infoRow('酒店', item.hotel);
+          html += infoRow('房间号', item.roomNumber);
+          html += infoRow('桌号', item.tableNumber);
+          html += infoRow('备注', item.remark);
+          html += '</div></div>';
+        });
+
+        $('#resultArea').html(html);
+      }
+
+      function infoRow(label, value) {
+        const display = (value !== null && value !== undefined && value !== '') ? value : '-';
+        return '<div class="info-row"><span class="info-label">' + label + '</span><span class="info-value">' + display + '</span></div>';
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return null;
+        return dateStr;
+      }
+
+      function formatTime(timeStr) {
+        if (!timeStr) return null;
+        return timeStr;
+      }
     });
   </script>
 </body>
