@@ -127,11 +127,16 @@ public class ReservationServiceImpl implements ReservationService {
                     reservation.setRoomCount(Integer.parseInt(roomCountStr));
                 }
 
-                // 列5: 房间类型（可多选）- 描述性文字，跳过
-                // 列6: 大床房, 列7: 标准间, 列8: 套房
-                reservation.setRoomTypeSingle(parseBoolean(row.getCell(6)));
-                reservation.setRoomTypeStandard(parseBoolean(row.getCell(7)));
-                reservation.setRoomTypeSuite(parseBoolean(row.getCell(8)));
+                String roomTypeDesc = getCellStringValue(row.getCell(5));
+                if (roomTypeDesc != null) {
+                    reservation.setRoomTypeSingle(roomTypeDesc.contains("大床房"));
+                    reservation.setRoomTypeStandard(roomTypeDesc.contains("标准间"));
+                    reservation.setRoomTypeSuite(roomTypeDesc.contains("套房"));
+                } else {
+                    reservation.setRoomTypeSingle(parseBoolean(row.getCell(6)));
+                    reservation.setRoomTypeStandard(parseBoolean(row.getCell(7)));
+                    reservation.setRoomTypeSuite(parseBoolean(row.getCell(8)));
+                }
 
                 reservation.setPickupLocation(getCellStringValue(row.getCell(9)));
 

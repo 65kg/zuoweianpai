@@ -453,31 +453,13 @@
 
         let html = '';
         list.forEach(function(item) {
-          const roomTypes = [];
-          if (item.roomTypeSingle) roomTypes.push('<span class="tag tag-yes">大床房</span>');
-          if (item.roomTypeStandard) roomTypes.push('<span class="tag tag-yes">标准间</span>');
-          if (item.roomTypeSuite) roomTypes.push('<span class="tag tag-yes">套房</span>');
-          const roomTypeHtml = roomTypes.length > 0 ? roomTypes.join('') : '<span class="tag tag-no">无</span>';
-
-          const initial = (item.name || '').charAt(0);
+          const tableName = item.tableNumber || '待分配';
 
           html += '<div class="result-card">';
-          html += '<div class="card-header">';
-          html += '<span class="name-icon">' + initial + '</span>';
-          html += (item.name || '');
-          html += '<span class="phone-text">' + (item.phone || '') + '</span>';
-          html += '</div>';
-          html += '<div class="card-body">';
-          html += infoRow('来宾人数', item.guestCount);
-          html += infoRow('房间需求数', item.roomCount);
-          html += infoRow('房间类型', roomTypeHtml);
-          html += infoRow('接站地', item.pickupLocation);
-          html += infoRow('到达日期', formatDate(item.arrivalDate));
-          html += infoRow('到达时间', formatTime(item.arrivalTime));
-          html += infoRow('酒店', item.hotel);
-          html += infoRow('房间号', item.roomNumber);
-          html += infoRow('桌号', item.tableNumber);
-          html += infoRow('备注', item.remark);
+          html += '<div class="card-body" style="text-align:center;padding:36px 24px;">';
+          html += '<div style="font-size:18px;color:#8B4513;margin-bottom:16px;letter-spacing:3px;">尊贵的来宾</div>';
+          html += '<div style="font-size:14px;color:#A0855C;margin-bottom:24px;letter-spacing:2px;">您的桌号是</div>';
+          html += '<div style="font-size:48px;font-weight:700;color:#8B0000;letter-spacing:4px;text-shadow:0 2px 8px rgba(139,0,0,0.15);">' + tableName + '</div>';
           html += '</div></div>';
         });
 
