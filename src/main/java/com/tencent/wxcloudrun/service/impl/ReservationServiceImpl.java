@@ -21,123 +21,132 @@ public class ReservationServiceImpl implements ReservationService {
     @Autowired
     private ReservationMapper reservationMapper;
 
+    private String getCellStringValue(Cell cell) {
+        if (cell == null) return null;
+        switch (cell.getCellType()) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                double val = cell.getNumericCellValue();
+                if (val == Math.floor(val) && !Double.isInfinite(val)) {
+                    return String.valueOf((long) val);
+                }
+                return String.valueOf(val);
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue());
+            case FORMULA:
+                try {
+                    return cell.getStringCellValue();
+                } catch (Exception e) {
+                    return String.valueOf(cell.getNumericCellValue());
+                }
+            case BLANK:
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    private LocalDate parseDate(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue().toLocalDate();
+        }
+        String str = getCellStringValue(cell);
+        if (str != null && !str.isEmpty()) {
+            try {
+                return LocalDate.parse(str, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            } catch (Exception e) {
+                try {
+                    return LocalDate.parse(str, DateTimeFormatter.ofPattern("yyyy/M/d"));
+                } catch (Exception ex) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    private LocalTime parseTime(Cell cell) {
+        if (cell == null) return null;
+        if (cell.getCellType() == CellType.NUMERIC && DateUtil.isCellDateFormatted(cell)) {
+            return cell.getLocalDateTimeCellValue().toLocalTime();
+        }
+        String str = getCellStringValue(cell);
+        if (str != null && !str.isEmpty()) {
+            try {
+                return LocalTime.parse(str, DateTimeFormatter.ofPattern("HH:mm"));
+            } catch (Exception e) {
+                try {
+                    return LocalTime.parse(str, DateTimeFormatter.ofPattern("H:mm"));
+                } catch (Exception ex) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     public int importExcel(MultipartFile file) {
         List<Reservation> reservations = new ArrayList<>();
-        
+
         try (Workbook workbook = WorkbookFactory.create(file.getInputStream())) {
             Sheet sheet = workbook.getSheetAt(0);
-            
-            // 跳过表头，从第二行开始读取
+
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
                 if (row == null) continue;
-                
+
                 Reservation reservation = new Reservation();
-                
-                // 姓名
-                if (row.getCell(1) != null) {
-                    reservation.setName(row.getCell(1).getStringCellValue());
+
+                reservation.setName(getCellStringValue(row.getCell(1)));
+
+                reservation.setPhone(getCellStringValue(row.getCell(2)));
+
+                String guestCountStr = getCellStringValue(row.getCell(3));
+                if (guestCountStr != null && !guestCountStr.isEmpty()) {
+                    reservation.setGuestCount(Integer.parseInt(guestCountStr));
                 }
-                
-                // 手机号码
-                if (row.getCell(2) != null) {
-                    reservation.setPhone(row.getCell(2).getStringCellValue());
+
+                String roomCountStr = getCellStringValue(row.getCell(4));
+                if (roomCountStr != null && !roomCountStr.isEmpty()) {
+                    reservation.setRoomCount(Integer.parseInt(roomCountStr));
                 }
-                
-                // 来宾人数
-                if (row.getCell(3) != null) {
-                    reservation.setGuestCount((int) row.getCell(3).getNumericCellValue());
-                }
-                
-                // 房间需求数
-                if (row.getCell(4) != null) {
-                    reservation.setRoomCount((int) row.getCell(4).getNumericCellValue());
-                }
-                
-                // 房间类型 - 大床房
-                if (row.getCell(5) != null) {
-                    reservation.setRoomTypeSingle("是".equals(row.getCell(5).getStringCellValue()));
-                }
-                
-                // 房间类型 - 标准间
-                if (row.getCell(6) != null) {
-                    reservation.setRoomTypeStandard("是".equals(row.getCell(6).getStringCellValue()));
-                }
-                
-                // 房间类型 - 套房
-                if (row.getCell(7) != null) {
-                    reservation.setRoomTypeSuite("是".equals(row.getCell(7).getStringCellValue()));
-                }
-                
-                // 接站地
-                if (row.getCell(8) != null) {
-                    reservation.setPickupLocation(row.getCell(8).getStringCellValue());
-                }
-                
-                // 到达日期
-                if (row.getCell(9) != null) {
-                    Cell dateCell = row.getCell(9);
-                    if (dateCell.getCellType() == CellType.NUMERIC) {
-                        // Excel日期格式
-                        reservation.setArrivalDate(dateCell.getLocalDateTimeCellValue().toLocalDate());
-                    } else if (dateCell.getCellType() == CellType.STRING) {
-                        // 字符串日期格式
-                        reservation.setArrivalDate(LocalDate.parse(dateCell.getStringCellValue(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                    }
-                }
-                
-                // 到达时间
-                if (row.getCell(10) != null) {
-                    Cell timeCell = row.getCell(10);
-                    if (timeCell.getCellType() == CellType.NUMERIC) {
-                        // Excel时间格式
-                        reservation.setArrivalTime(timeCell.getLocalDateTimeCellValue().toLocalTime());
-                    } else if (timeCell.getCellType() == CellType.STRING) {
-                        // 字符串时间格式
-                        reservation.setArrivalTime(LocalTime.parse(timeCell.getStringCellValue(), DateTimeFormatter.ofPattern("HH:mm")));
-                    }
-                }
-                
-                // 酒店
-                if (row.getCell(11) != null) {
-                    reservation.setHotel(row.getCell(11).getStringCellValue());
-                }
-                
-                // 房间号
-                if (row.getCell(12) != null) {
-                    if (row.getCell(12).getCellType() == CellType.NUMERIC) {
-                        reservation.setRoomNumber(String.valueOf((int) row.getCell(12).getNumericCellValue()));
-                    } else {
-                        reservation.setRoomNumber(row.getCell(12).getStringCellValue());
-                    }
-                }
-                
-                // 桌号
-                if (row.getCell(13) != null) {
-                    if (row.getCell(13).getCellType() == CellType.NUMERIC) {
-                        reservation.setTableNumber(String.valueOf((int) row.getCell(13).getNumericCellValue()));
-                    } else {
-                        reservation.setTableNumber(row.getCell(13).getStringCellValue());
-                    }
-                }
-                
-                // 备注
-                if (row.getCell(14) != null) {
-                    reservation.setRemark(row.getCell(14).getStringCellValue());
-                }
-                
+
+                String singleStr = getCellStringValue(row.getCell(5));
+                reservation.setRoomTypeSingle("是".equals(singleStr) || "1".equals(singleStr) || "true".equalsIgnoreCase(singleStr));
+
+                String standardStr = getCellStringValue(row.getCell(6));
+                reservation.setRoomTypeStandard("是".equals(standardStr) || "1".equals(standardStr) || "true".equalsIgnoreCase(standardStr));
+
+                String suiteStr = getCellStringValue(row.getCell(7));
+                reservation.setRoomTypeSuite("是".equals(suiteStr) || "1".equals(suiteStr) || "true".equalsIgnoreCase(suiteStr));
+
+                reservation.setPickupLocation(getCellStringValue(row.getCell(8)));
+
+                reservation.setArrivalDate(parseDate(row.getCell(9)));
+
+                reservation.setArrivalTime(parseTime(row.getCell(10)));
+
+                reservation.setHotel(getCellStringValue(row.getCell(11)));
+
+                reservation.setRoomNumber(getCellStringValue(row.getCell(12)));
+
+                reservation.setTableNumber(getCellStringValue(row.getCell(13)));
+
+                reservation.setRemark(getCellStringValue(row.getCell(14)));
+
                 reservations.add(reservation);
             }
-            
-            // 批量插入数据
+
             if (!reservations.isEmpty()) {
                 return reservationMapper.batchInsert(reservations);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        
+
         return 0;
     }
 
